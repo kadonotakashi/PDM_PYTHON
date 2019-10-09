@@ -150,6 +150,50 @@ class pdmstm32:
 
         fw.close()
 
+    def toWaveFile_32k_mono(self):
+        fw0 = open(self.filename +"_32k.wav", 'wb')
+        #read header
+
+        headerfilename = "data/wave_header32k.bin"
+        fr = open(headerfilename, 'rb')
+        a = np.fromfile(headerfilename, np.uint8)   #base
+        fr.close()
+
+        wavedataSize =  self.RecordBlock * 512  #record block unit = 1kbyte(16bit * 512k)
+
+        temp3 = wavedataSize // (256 * 256 * 256)
+        a[43]=temp3
+        a[7]=temp3
+
+        temp2 = (wavedataSize % (256 * 256 * 256))//(256 * 256)
+        a[42]=temp2
+        a[6]=temp2
+        temp1 = (wavedataSize % (256 * 256)) // 256
+        a[41]=temp1
+        a[5]=temp1
+        a[40]=0x00
+        a[4]=0x2C
+
+        fw0.write(a)
+
+        RCRDBLK_STR = format(self.RecordBlock,'04x')
+        send_command = "(GW"+RCRDBLK_STR+"00)"
+        print(send_command)
+        send_command=send_command.encode('utf-8')
+        self.ser.write(send_command)
+
+        for block in range(self.RecordBlock):
+            #    rcvbuf =  ser.read(6)   #header
+            #    print(rcvbuf)
+            rcvbuf0 =  self.ser.read(1024)
+            rcvbuf1 =  self.ser.read(1024)
+
+            fw0.write(rcvbuf0)
+            fw1.write(rcvbuf1)
+            #   rcvbuf =  ser.read(2)   #footer
+            #    print(rcvbuf)
+        print((block+1) ,"block recv end")
+        fw0.close()
 
     def RecordStart(self,filename,fname_flag,RecordLength):
         #ファイル名の決定

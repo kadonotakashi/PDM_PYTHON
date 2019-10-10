@@ -17,7 +17,7 @@ class pdmstm32:
     def ComOpen(self):
         PORTNO = list(serial.tools.list_ports.comports())[0][0]
         '''ここで不都合なポート番号が検出されるときは決めうち '''
-        PORTNO='COM9'
+#        PORTNO='COM9'
         print(PORTNO, "をopenします")
         self.ser = serial.Serial(port=PORTNO, baudrate=921600)
         self.ser.reset_input_buffer()
@@ -159,8 +159,7 @@ class pdmstm32:
         a = np.fromfile(headerfilename, np.uint8)   #base
         fr.close()
 
-        wavedataSize =  self.RecordBlock * 512  #record block unit = 1kbyte(16bit * 512k)
-
+        wavedataSize =  self.RecordBlock * 512  *2 #record block unit = 1kbyte(16bit * 512k)
         temp3 = wavedataSize // (256 * 256 * 256)
         a[43]=temp3
         a[7]=temp3
@@ -176,6 +175,16 @@ class pdmstm32:
 
         fw0.write(a)
 
+        #Gain 設定
+        GAIN_STR =  format(self.MicGain,'02x')
+        send_command = "(SG" + GAIN_STR + GAIN_STR + "00)"
+        print(send_command)
+        send_command=send_command.encode('utf-8')
+        self.ser.write(send_command)
+        rcvbuf =  self.ser.read(10)
+
+
+        #録音開始
         RCRDBLK_STR = format(self.RecordBlock,'04x')
         send_command = "(GW"+RCRDBLK_STR+"00)"
         print(send_command)
@@ -183,15 +192,9 @@ class pdmstm32:
         self.ser.write(send_command)
 
         for block in range(self.RecordBlock):
-            #    rcvbuf =  ser.read(6)   #header
-            #    print(rcvbuf)
             rcvbuf0 =  self.ser.read(1024)
-            rcvbuf1 =  self.ser.read(1024)
-
             fw0.write(rcvbuf0)
-            fw1.write(rcvbuf1)
-            #   rcvbuf =  ser.read(2)   #footer
-            #    print(rcvbuf)
+
         print((block+1) ,"block recv end")
         fw0.close()
 
@@ -225,4 +228,20 @@ class pdmstm32:
         self.RecordBlock = RecordLength
         self.ComOpen()      #シリアルポートオープン
         self.toWaveFile2ch()   #録音
+        self.ComClose()
+
+    def RecordStart32k(self,filename,fname_flag,RecordLength,Mic_Gain):
+        #ファイル名の決定
+        self.filename=filename
+        print(fname_flag)
+        print(filename)
+        if fname_flag==True:
+            time_now = datetime.datetime.now()
+            self.filename=filename +"_" + str(time_now.hour) + str(time_now.minute) + str(time_now.second)
+
+        #録音時間
+        self.MicGain = Mic_Gain
+        self.RecordBlock = RecordLength
+        self.ComOpen()      #シリアルポートオープン
+        self.toWaveFile_32k_mono()   #録音
         self.ComClose()

@@ -7,7 +7,7 @@ pdmmic= mic.pdmstm32()
 
 def StartRec():
     print(fn_flag.get())
-    pdmmic.RecordStart(fname.get(),fn_flag.get(),lngth.get())
+    pdmmic.RecordStartFPGA(fname.get(),fn_flag.get(),lngth.get())
 
 
 root = tk.Tk()

@@ -44,7 +44,7 @@ class pdm_fpga:
 
             wavedataSize =  self.RecordBlock * 512 * 4  #record block unit = 1kbyte(16bit * 512k)
             #set sample rate to 16kHz
-            send_command = "(SF000000)"
+            send_command = "(SF010000)"
 
         else:   #32kHz
             print("32k")
@@ -54,7 +54,7 @@ class pdm_fpga:
             fr.close()
             wavedataSize =  self.RecordBlock * 512 * 4  #record block unit = 1kbyte(16bit * 512k)
             #set sample rate to 32kHz
-            send_command = "(SF100000)"
+            send_command = "(SF000000)"
 
         print(send_command)
         send_command=send_command.encode('utf-8')

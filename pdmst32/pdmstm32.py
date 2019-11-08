@@ -194,8 +194,11 @@ class pdmstm32:
         for block in range(self.RecordBlock):
             rcvbuf0 =  self.ser.read(1024)
             fw0.write(rcvbuf0)
+            if (block%64 == 0):
+                print(block ,"block recieved")
 
-        print((block+1) ,"block recv end")
+        print((block+1) ,"block recieved")
+        print("Record end")
         fw0.close()
 
     def RecordStart(self,filename,fname_flag,RecordLength):
